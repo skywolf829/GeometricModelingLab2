@@ -71,10 +71,10 @@ class BezierCurve extends Curve {
         vertices.add(new Point(x, y, z));
       }
     }
-    if(closed){
-     while(vertices.size() > args[0] * args[1]){
-      vertices.remove(vertices.size() - 1); 
-     }
+    if (closed) {
+      while (vertices.size() > args[0] * args[1]) {
+        vertices.remove(vertices.size() - 1);
+      }
     }
     for (int i = 0; i < args[0] * args[1]; i++) {
       ArrayList<Integer> temp = new ArrayList<Integer>();
@@ -84,8 +84,8 @@ class BezierCurve extends Curve {
       temp.add(((i / ((int)(args[1]))) * ((int)(args[1])) + 
         (i+1) % ((int)args[1]) + ((int)args[1])));// % ((int)(args[0] * args[1])));
       temp.add((i + ((int)args[1])));// % ((int)(args[0] * args[1])));
-      
-      if(closed){
+
+      if (closed) {
         temp.add(0, temp.get(0)% ((int)(args[0] * args[1])));
         temp.remove(1);
         temp.add(1, temp.get(1)% ((int)(args[0] * args[1])));
@@ -96,6 +96,33 @@ class BezierCurve extends Curve {
         temp.remove(4);
       }
       ASCIIfaces.add(temp);
+    }
+    return new Mesh(vertices, ASCIIfaces);
+  }
+
+  Mesh extrude(double[] args, double l) {
+    ArrayList<Point> vertices = new ArrayList<Point>();
+    ArrayList<ArrayList<Integer>> ASCIIfaces = new ArrayList<ArrayList<Integer>>();
+
+    for (float i = 0; i <= 1; i += 1 / args[1]) {
+      for (float j = 0; j < 1; j += 1 / args[0]) {
+        Point p = SolveAtParameterBernstein(j);
+        double x = 0, y=0, z=0;
+        z = i * l;
+        x = p.x;
+        y = p.y;
+        vertices.add(new Point(x, y, z));
+      }
+    }
+    for (int i = 0; i < args[1]; i++) {
+      for (int j = 0; j < args[0]; j++) {        
+        ArrayList<Integer> temp = new ArrayList<Integer>();
+        temp.add(j + (int)(i*args[1]));
+        temp.add(j + 1 + (int)(i*args[1]));
+        temp.add(j + 1 + (int)args[0] + (int)(i*args[1]));
+        temp.add(j + (int)args[0] + (int)(i * args[1]));
+        ASCIIfaces.add(temp);
+      }
     }
     return new Mesh(vertices, ASCIIfaces);
   }
