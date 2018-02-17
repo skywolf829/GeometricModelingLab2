@@ -278,7 +278,7 @@ void CheckGo() {
       mesh.GenerateASCIIFile();
     } else if (operations.selectedIndex == 1) {
       currentCurveArgs[0] = 100;
-      currentCurveArgs[1] = 10;
+      currentCurveArgs[1] = 100;
       mesh = ((BezierCurve)(generatorCurve)).extrude(currentCurveArgs, 
         Integer.parseInt(extrudeDepth.text));
       mesh.GenerateASCIIFile();

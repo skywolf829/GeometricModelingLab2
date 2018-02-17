@@ -105,7 +105,7 @@ class BezierCurve extends Curve {
     ArrayList<ArrayList<Integer>> ASCIIfaces = new ArrayList<ArrayList<Integer>>();
 
     for (float i = 0; i <= 1; i += 1 / args[1]) {
-      for (float j = 0; j < 1; j += 1 / args[0]) {
+      for (float j = 0; j <= 1; j += 1 / args[0]) {
         Point p = SolveAtParameterBernstein(j);
         double x = 0, y=0, z=0;
         z = i * l;
@@ -115,12 +115,13 @@ class BezierCurve extends Curve {
       }
     }
     for (int i = 0; i < args[1]; i++) {
-      for (int j = 0; j < args[0]; j++) {        
+      for (int j = 0; j < args[0]; j++) {    
+        int base = (int)(i * (args[1]+1));
         ArrayList<Integer> temp = new ArrayList<Integer>();
-        temp.add(j + (int)(i*args[1]));
-        temp.add(j + 1 + (int)(i*args[1]));
-        temp.add(j + 1 + (int)args[0] + (int)(i*args[1]));
-        temp.add(j + (int)args[0] + (int)(i * args[1]));
+        temp.add(base + j);
+        temp.add(base + j + 1);
+        temp.add(base + j + 1 + (int)(args[0]+1));
+        temp.add(base + j + (int)(args[0]+1));
         ASCIIfaces.add(temp);
       }
     }

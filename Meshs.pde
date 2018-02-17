@@ -39,8 +39,9 @@ public class Mesh {
         vertex((float)p1.x, (float)p1.y, (float)p1.z);
         line((float)p1.x, (float)p1.y, (float)p1.z, (float)p2.x, (float)p2.y, (float)p2.z);
       }
+      line((float)p2.x, (float)p2.y, (float)p2.z, (float)first.x, (float)first.y, (float)first.z);
       vertex((float)first.x, (float)first.y, (float)first.z);
-      endShape(CLOSE);
+      endShape();
     }
   }
 }
