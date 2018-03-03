@@ -27,9 +27,19 @@ class Point {
   }
   public void draw() {
     circle.draw();
-  }
+  } 
 }
-
+public static double ccw(Point a, Point b, Point c) {
+   return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+}
+public boolean intersects(Point a1, Point a2, Point b1, Point b2) {
+   double r = ((a1.y - b1.y) * (b2.x - b1.x) - (a1.x - b1.x) *(b2.y - b1.y)) / 
+   ((a2.x - a1.x) * (b2.y - b1.y) - (a2.y - a1.y) * (b2.x - b1.x));
+   double s = ((a1.y - b1.y) * (a2.x - a1.x) - (a1.x - b1.x) *(a2.y - a1.y)) / 
+   ((a2.x - a1.x) * (b2.y - b1.y) - (a2.y - a1.y) * (b2.x - b1.x));
+   
+   return r > 0 && r < 1 && s > 0 && s < 1;
+}
 static double distance(Point p1, Point p2) {
   return Math.pow(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2), 0.5);
 }

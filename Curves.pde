@@ -50,6 +50,19 @@ class BezierCurve extends Curve {
     }
   }
 
+  public boolean selfIntersects() {
+    boolean intersects = false;
+    for (int i = 0; i < approximatePoints.size() - 1 && !intersects; i++) {
+      Point a1 = approximatePoints.get(i);
+      Point a2 = approximatePoints.get(i+1);
+      for(int j = i + 1; j < approximatePoints.size() - 1 && !intersects; j++){
+        Point b1 = approximatePoints.get(j);
+        Point b2 = approximatePoints.get(j+1);
+        intersects = intersects(a1, a2, b1, b2);
+      }
+    }
+    return intersects;
+  }
   public Mesh approximateRevolution(double[] args, char dimension) {
     ArrayList<Point> vertices = new ArrayList<Point>();
     ArrayList<ArrayList<Integer>> ASCIIfaces = new ArrayList<ArrayList<Integer>>();
@@ -111,6 +124,35 @@ class BezierCurve extends Curve {
         z = i * l;
         x = p.x;
         y = p.y;
+        vertices.add(new Point(x, y, z));
+      }
+    }
+    for (int i = 0; i < args[1]; i++) {
+      for (int j = 0; j < args[0]; j++) {    
+        int base = (int)(i * (args[1]+1));
+        ArrayList<Integer> temp = new ArrayList<Integer>();
+        temp.add(base + j);
+        temp.add(base + j + 1);
+        temp.add(base + j + 1 + (int)(args[0]+1));
+        temp.add(base + j + (int)(args[0]+1));
+        ASCIIfaces.add(temp);
+      }
+    }
+    return new Mesh(vertices, ASCIIfaces);
+  }
+
+  Mesh trajectory(double[] args, BezierCurve t) {
+    ArrayList<Point> vertices = new ArrayList<Point>();
+    ArrayList<ArrayList<Integer>> ASCIIfaces = new ArrayList<ArrayList<Integer>>();
+    for (float i = 0; i < 1; i += 1/args[1]) {
+      Point p0 = SolveAtParameterBernstein(0);
+      for (float j = 0; j < 1; j += 1/args[0]) {
+        Point p = SolveAtParameterBernstein(j);
+        Point g = t.SolveAtParameterBernstein(i);
+
+        double x = p.x - p0.x, y=p.y - p0.y, z=0;
+        z = -g.x;
+        y += g.y;
         vertices.add(new Point(x, y, z));
       }
     }

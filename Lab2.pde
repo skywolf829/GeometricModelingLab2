@@ -20,6 +20,7 @@ CheckBox closeGeneratorCurve;
 CheckBox closeTrajectoryCurve;
 
 TextInput extrudeDepth;
+TextInput numSlices;
 
 ArrayList<MoveablePoint> generatorPoints, trajectoryPoints;
 
@@ -29,6 +30,8 @@ int lastPointSelected = 0;
 
 boolean viewingGenerator = true;
 boolean animating = false;
+boolean generatorSelfIntersects = false;
+boolean trajectorySelfIntersects = false;
 
 float x, y, z;
 float eulerX, eulerY, eulerZ;
@@ -46,7 +49,7 @@ void start() {
 
   closeTrajectoryCurve = new CheckBox(screenWidth - 250, 170, 20);
   extrudeDepth = new TextInput(screenWidth - 250, 100, 100, 30);
-
+  numSlices = new TextInput(screenWidth - 250, 100, 100, 30);
   viewGenerator = new Rectangle(screenWidth - 250, 100, 100, 30);
   viewGenerator.c = color(255);
   viewTrajectory = new Rectangle(screenWidth - 140, 100, 100, 30);
@@ -102,8 +105,12 @@ void mousePressed() {
     CheckAddPoint();
     CheckGo();
     CheckGeneratorClosed();
-    if (operations.selectedIndex == 1) {
+    if (operations.selectedIndex == 0) {
+      numSlices.mousePressed();
+      viewingGenerator = true;
+    } else if (operations.selectedIndex == 1) {
       extrudeDepth.mousePressed();
+      viewingGenerator = true;
     } else if (operations.selectedIndex == 2) {
       CheckTrajectoryClosed(); 
       CheckViewGenerator();
@@ -113,21 +120,38 @@ void mousePressed() {
 }
 void mouseDragged() {
   boolean changed = false;
-
-  for (int i = 0; i < generatorPoints.size(); i++) {
-    double oldx = generatorPoints.get(i).x;
-    double oldy = generatorPoints.get(i).y;
-    generatorPoints.get(i).mouseDragged();
-    if (oldx != generatorPoints.get(i).x || oldy != generatorPoints.get(i).y) changed = true;
+  if (viewingGenerator) {
+    for (int i = 0; i < generatorPoints.size(); i++) {
+      double oldx = generatorPoints.get(i).x;
+      double oldy = generatorPoints.get(i).y;
+      generatorPoints.get(i).mouseDragged();
+      if (oldx != generatorPoints.get(i).x || oldy != generatorPoints.get(i).y) changed = true;
+    }
+    generatorCurve.controlPoints = ToPoints(generatorPoints);
+    if (changed)
+      generatorCurve.approximateCurve(currentCurveArgs);
+  } else {
+    for (int i = 0; i < trajectoryPoints.size(); i++) {
+      double oldx = trajectoryPoints.get(i).x;
+      double oldy = trajectoryPoints.get(i).y;
+      trajectoryPoints.get(i).mouseDragged();
+      if (oldx != trajectoryPoints.get(i).x || oldy != trajectoryPoints.get(i).y) changed = true;
+    }
+    trajectoryCurve.controlPoints = ToPoints(trajectoryPoints);
+    if (changed)
+      trajectoryCurve.approximateCurve(currentCurveArgs);
   }
-  generatorCurve.controlPoints = ToPoints(generatorPoints);
-  if (changed)
-    generatorCurve.approximateCurve(currentCurveArgs);
 }
 
 void mouseReleased() {
-  for (int i = 0; i < generatorPoints.size(); i++) {
-    generatorPoints.get(i).mouseReleased();
+  if (viewingGenerator) {
+    for (int i = 0; i < generatorPoints.size(); i++) {
+      generatorPoints.get(i).mouseReleased();
+    }
+  } else {
+    for (int i = 0; i < trajectoryPoints.size(); i++) {
+      trajectoryPoints.get(i).mouseReleased();
+    }
   }
 }
 
@@ -150,10 +174,16 @@ void draw() {
     stroke(100);
     textSize(30);
     text("Go", screenWidth - 250 + 9, 230);
+    closeGeneratorCurve.draw();
     if (pointManipulation.selectedIndex == 0)
       addPoint.draw();
-
-    if (operations.selectedIndex == 1) {
+    if (operations.selectedIndex == 0) {
+      numSlices.draw();
+      fill(255);
+      textSize(16);
+      text("# slices", screenWidth - 150, 122);
+      fill(255);
+    } else if (operations.selectedIndex == 1) {
       extrudeDepth.draw();
       fill(255);
       textSize(16);
@@ -194,46 +224,99 @@ void draw() {
   stroke(0, 0, 255);
   line(0, 0, -1000, 0, 0, 1000);
 
+
   if (mesh != null) {
     stroke(255);
     mesh.draw();
   } else {
-    closeGeneratorCurve.draw();
-    for (int i = 0; i < generatorPoints.size(); i++) {
-      if (lastPointSelected == i) {
+    if (viewingGenerator) {
+      for (int i = 0; i < generatorPoints.size(); i++) {
+        if (lastPointSelected == i) {
+          noStroke();
+          fill(0, 255, 0);
+          ellipse(generatorPoints.get(i).circle.x, generatorPoints.get(i).circle.y, 
+            generatorPoints.get(i).circle.width + 4, generatorPoints.get(i).circle.height + 4);
+        }
         noStroke();
-        fill(0, 255, 0);
-        ellipse(generatorPoints.get(i).circle.x, generatorPoints.get(i).circle.y, 
-          generatorPoints.get(i).circle.width + 4, generatorPoints.get(i).circle.height + 4);
+        generatorPoints.get(i).draw();    
+        stroke(0, 0, 255);
+        fill(0, 0, 255);
+        text(i+1, (int)generatorPoints.get(i).x, (int)generatorPoints.get(i).y + 20);
       }
-      noStroke();
-      generatorPoints.get(i).draw();    
-      stroke(0, 0, 255);
-      fill(0, 0, 255);
-      text(i+1, (int)generatorPoints.get(i).x, (int)generatorPoints.get(i).y + 20);
+    } else {
+      for (int i = 0; i < trajectoryPoints.size(); i++) {
+        if (lastPointSelected == i) {
+          noStroke();
+          fill(0, 255, 0);
+          ellipse(trajectoryPoints.get(i).circle.x, trajectoryPoints.get(i).circle.y, 
+            trajectoryPoints.get(i).circle.width + 4, trajectoryPoints.get(i).circle.height + 4);
+        }
+        noStroke();
+        trajectoryPoints.get(i).draw();    
+        stroke(0, 0, 255);
+        fill(0, 0, 255);
+        text(i+1, (int)trajectoryPoints.get(i).x, (int)trajectoryPoints.get(i).y + 20);
+      }
     }
     stroke(130, 170, 0);
-    generatorCurve.draw();
+    if (viewingGenerator) {
+      generatorCurve.draw();
+    } else {
+      trajectoryCurve.draw();
+    }
   }
   popMatrix();
+  if (mesh != null) {
+    if (generatorSelfIntersects) {
+      textSize(20);
+      stroke(255, 0, 0);
+      fill(255, 0, 0);
+      text("Warning: Generator self intersects", 100, screenHeight - 50);
+    }
+
+    if (trajectorySelfIntersects) {
+      textSize(20);
+      stroke(255, 0, 0);
+      fill(255, 0, 0);
+      text("Warning: Trajectory self intersects", 100, screenHeight - 25);
+    }
+  }
 }
 
 
 
 void CheckPointsClicked() {
-  for (int i = 0; i < generatorPoints.size(); i++) {
-    // See if they select a point and hold id
-    if (pointManipulation.selectedIndex == 2) {
-      generatorPoints.get(i).mousePressed();   
-      if (generatorPoints.get(i).holding) lastPointSelected = i;
+  if (viewingGenerator) {
+    for (int i = 0; i < generatorPoints.size(); i++) {
+      // See if they select a point and hold id
+      if (pointManipulation.selectedIndex == 2) {
+        generatorPoints.get(i).mousePressed();   
+        if (generatorPoints.get(i).holding) lastPointSelected = i;
+      }
+      if (generatorPoints.get(i).holding) return;
+      // See if they delete a point
+      if (pointManipulation.selectedIndex == 1 && generatorPoints.get(i).circle.contains(mouseX, mouseY)) {
+        generatorPoints.remove(i);
+        generatorCurve.controlPoints = ToPoints(generatorPoints);
+        generatorCurve.approximateCurve(currentCurveArgs);
+        return;
+      }
     }
-    if (generatorPoints.get(i).holding) return;
-    // See if they delete a point
-    if (pointManipulation.selectedIndex == 1 && generatorPoints.get(i).circle.contains(mouseX, mouseY)) {
-      generatorPoints.remove(i);
-      generatorCurve.controlPoints = ToPoints(generatorPoints);
-      generatorCurve.approximateCurve(currentCurveArgs);
-      return;
+  } else {
+    for (int i = 0; i < trajectoryPoints.size(); i++) {
+      // See if they select a point and hold id
+      if (pointManipulation.selectedIndex == 2) {
+        trajectoryPoints.get(i).mousePressed();   
+        if (trajectoryPoints.get(i).holding) lastPointSelected = i;
+      }
+      if (trajectoryPoints.get(i).holding) return;
+      // See if they delete a point
+      if (pointManipulation.selectedIndex == 1 && trajectoryPoints.get(i).circle.contains(mouseX, mouseY)) {
+        trajectoryPoints.remove(i);
+        trajectoryCurve.controlPoints = ToPoints(trajectoryPoints);
+        trajectoryCurve.approximateCurve(currentCurveArgs);
+        return;
+      }
     }
   }
 }
@@ -245,9 +328,15 @@ void CheckAddPoint() {
     if (addPoint.selectedIndex == 0) index = lastPointSelected;
     else index = lastPointSelected+1;
     if (generatorPoints.size() == 0) index = 0;
-    generatorPoints.add(index, new MoveablePoint(mouseX, mouseY, drawingArea));
-    generatorCurve.controlPoints = ToPoints(generatorPoints);
-    generatorCurve.approximateCurve(currentCurveArgs);
+    if (viewingGenerator) {
+      generatorPoints.add(index, new MoveablePoint(mouseX, mouseY, drawingArea));
+      generatorCurve.controlPoints = ToPoints(generatorPoints);
+      generatorCurve.approximateCurve(currentCurveArgs);
+    } else {
+      trajectoryPoints.add(index, new MoveablePoint(mouseX, mouseY, drawingArea));
+      trajectoryCurve.controlPoints = ToPoints(trajectoryPoints);
+      trajectoryCurve.approximateCurve(currentCurveArgs);
+    }
   }
 }
 
@@ -271,9 +360,12 @@ void CheckTrajectoryClosed() {
 }
 void CheckGo() {
   if (goButton.contains(mouseX, mouseY)) {
+    generatorSelfIntersects = (((BezierCurve)(generatorCurve)).selfIntersects());
+    trajectorySelfIntersects = false;
+
     if (operations.selectedIndex == 0) {
       currentCurveArgs[0] = 100;
-      currentCurveArgs[1] = 100;
+      currentCurveArgs[1] = Integer.parseInt(numSlices.text);
       mesh = ((BezierCurve)(generatorCurve)).approximateRevolution(currentCurveArgs, 'x');
       mesh.GenerateASCIIFile();
     } else if (operations.selectedIndex == 1) {
@@ -283,8 +375,15 @@ void CheckGo() {
         Integer.parseInt(extrudeDepth.text));
       mesh.GenerateASCIIFile();
     } else if (operations.selectedIndex == 2) {
+      trajectorySelfIntersects = (((BezierCurve)(trajectoryCurve)).selfIntersects());
+      currentCurveArgs[0] = 100;
+      currentCurveArgs[1] = 100;
+      mesh = ((BezierCurve)(generatorCurve)).trajectory(currentCurveArgs, 
+        (BezierCurve)(trajectoryCurve));
+      mesh.GenerateASCIIFile();
     }
   }
+  println(generatorSelfIntersects);
 }
 void CheckReset() {
   if (reset.contains(mouseX, mouseY)) {
@@ -293,8 +392,10 @@ void CheckReset() {
   }
 }
 void keyPressed() {
-  if (mesh == null) { 
-    if (operations.selectedIndex == 1) {
+  if (mesh == null) {
+    if (operations.selectedIndex == 0) {
+      numSlices.keyPressed();
+    } else if (operations.selectedIndex == 1) {
       extrudeDepth.keyPressed();
     }
   } else {
@@ -339,6 +440,14 @@ void keyPressed() {
   }
 }
 void CheckViewGenerator() {
+  if (viewGenerator.contains(mouseX, mouseY)) {
+    lastPointSelected = 0;
+    viewingGenerator = true;
+  }
 }
 void CheckViewTrajectory() {
+  if (viewTrajectory.contains(mouseX, mouseY)) {
+    lastPointSelected = 0;
+    viewingGenerator = false;
+  }
 }
