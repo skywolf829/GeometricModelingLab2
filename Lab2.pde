@@ -24,8 +24,6 @@ TextInput numSlices;
 
 ArrayList<MoveablePoint> generatorPoints, trajectoryPoints;
 
-int screenWidth = 700;
-int screenHeight = 400;
 int lastPointSelected = 0;
 
 boolean viewingGenerator = true;
@@ -37,7 +35,7 @@ float x, y, z;
 float eulerX, eulerY, eulerZ;
 void start() {
   // Add the drawing area
-  drawingArea = new Rectangle(5, 5, screenWidth - 250 - 10, screenHeight - 10);
+  drawingArea = new Rectangle(5, 5, width - 250 - 10, height - 10);
   drawingArea.c = color(255);
 
   operations = new RadioButtons(new String[] {"Revolve", "Extrude", "Sweep"}, 
@@ -45,17 +43,17 @@ void start() {
   reset = new Rectangle(drawingArea.width + 20, 20, 100, 30);
   reset.c = color(255);
 
-  closeGeneratorCurve = new CheckBox(screenWidth - 250, 140, 20);
+  closeGeneratorCurve = new CheckBox(width - 250, 140, 20);
 
-  closeTrajectoryCurve = new CheckBox(screenWidth - 250, 170, 20);
-  extrudeDepth = new TextInput(screenWidth - 250, 100, 100, 30);
-  numSlices = new TextInput(screenWidth - 250, 100, 100, 30);
-  viewGenerator = new Rectangle(screenWidth - 250, 100, 100, 30);
+  closeTrajectoryCurve = new CheckBox(width - 250, 170, 20);
+  extrudeDepth = new TextInput(width - 250, 100, 100, 30);
+  numSlices = new TextInput(width - 250, 100, 100, 30);
+  viewGenerator = new Rectangle(width - 250, 100, 100, 30);
   viewGenerator.c = color(255);
-  viewTrajectory = new Rectangle(screenWidth - 140, 100, 100, 30);
+  viewTrajectory = new Rectangle(width - 140, 100, 100, 30);
   viewTrajectory.c = color(255);
 
-  goButton = new Rectangle(screenWidth - 250, 200, 60, 30);
+  goButton = new Rectangle(width - 250, 200, 60, 30);
   goButton.c = color(255);
 
 
@@ -86,6 +84,7 @@ void start() {
 
 void setup() {
   size(700, 400, P3D);
+  surface.setResizable(true);
   noSmooth();
   background(0);
 }
@@ -164,7 +163,7 @@ void draw() {
     textSize(16);
     fill(255);
     noStroke();
-    text("Close generator wire", screenWidth - 220, 157);
+    text("Close generator wire", width - 220, 157);
     textSize(12);  
     stroke(255);
     pointManipulation.draw();
@@ -173,7 +172,7 @@ void draw() {
     fill(0);
     stroke(100);
     textSize(30);
-    text("Go", screenWidth - 250 + 9, 230);
+    text("Go", width - 250 + 9, 230);
     closeGeneratorCurve.draw();
     if (pointManipulation.selectedIndex == 0)
       addPoint.draw();
@@ -181,13 +180,13 @@ void draw() {
       numSlices.draw();
       fill(255);
       textSize(16);
-      text("# slices", screenWidth - 150, 122);
+      text("# slices", width - 150, 122);
       fill(255);
     } else if (operations.selectedIndex == 1) {
       extrudeDepth.draw();
       fill(255);
       textSize(16);
-      text("Length to extrude", screenWidth - 150, 122);
+      text("Length to extrude", width - 150, 122);
       fill(255);
     } else if (operations.selectedIndex == 2) {
       noStroke();
@@ -195,15 +194,15 @@ void draw() {
       fill(255);
       textSize(16);  
       noStroke();
-      text("Close trajectory wire", screenWidth - 220, 187);    
+      text("Close trajectory wire", width - 220, 187);    
       viewGenerator.draw();
       fill(0);
       textSize(13);
-      text("View generator", screenWidth - 250 + 4, 120);
+      text("View generator", width - 250 + 4, 120);
       viewTrajectory.draw();
       fill(0);
       textSize(13);
-      text("View trajectory", screenWidth - 140 + 4, 120);
+      text("View trajectory", width - 140 + 4, 120);
     }
   } else {
     reset.draw();
@@ -271,14 +270,14 @@ void draw() {
       textSize(20);
       stroke(255, 0, 0);
       fill(255, 0, 0);
-      text("Warning: Generator self intersects", 100, screenHeight - 50);
+      text("Warning: Generator self intersects", 100, height - 50);
     }
 
     if (trajectorySelfIntersects) {
       textSize(20);
       stroke(255, 0, 0);
       fill(255, 0, 0);
-      text("Warning: Trajectory self intersects", 100, screenHeight - 25);
+      text("Warning: Trajectory self intersects", 100, height - 25);
     }
   }
 }
@@ -383,7 +382,6 @@ void CheckGo() {
       mesh.GenerateASCIIFile();
     }
   }
-  println(generatorSelfIntersects);
 }
 void CheckReset() {
   if (reset.contains(mouseX, mouseY)) {
